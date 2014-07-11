@@ -14,12 +14,12 @@ public class SudokuTile {
 	private boolean			_blocked;
 
 	public SudokuTile(int x, int y, int maxValue) {
-		_x = x;
-		_y = y;
-		_blocked = false;
-		_maxValue = maxValue;
-		possibleValues = new HashSet<Integer>();
-		_value = 0;
+		this._x = x;
+		this._y = y;
+		this._blocked = false;
+		this._maxValue = maxValue;
+		this.possibleValues = new HashSet<Integer>();
+		this._value = 0;
 	}
 
 	public int getValue() {
@@ -47,7 +47,7 @@ public class SudokuTile {
 
 	@Override
 	public String toString() {
-		return String.format("Value {0} at pos {1}, {2}. ", getValue(), _x, _y,
+		return String.format("Value %d at pos %d, %d. ", getValue(), _x, _y,
 				possibleValues.size());
 	}
 
@@ -64,7 +64,7 @@ public class SudokuTile {
 	}
 
 	void fix(int value, String reason) {
-		System.out.printf("Fixing %d on pos %d, %d: %s", value, _x, _y, reason);
+//		System.out.printf("Fixing %d on pos %d, %d: %s", value, _x, _y, reason);
 		setValue(value);
 		resetPossibles();
 	}

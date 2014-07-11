@@ -15,30 +15,28 @@ public class SudokuFactory
 	private static final int BOX_SIZE = 3;
 	private static final int HYPER_MARGIN = 1;
 
-	public static Collection<ImmutablePoint> box(int sizeX, int sizeY)
-	{
+	public static Collection<ImmutablePoint> box(int sizeX, int sizeY) {
 		Collection<ImmutablePoint> points = new ArrayList<>(sizeX * sizeY);
 		IntStream.range(0, sizeX).forEach(x -> IntStream.range(0, sizeY)
 				.forEach(y -> points.add(new ImmutablePoint(x, y))));
 		return points;
 	}
 
-	public static SudokuBoard samurai()
-	{
+	public static SudokuBoard samurai() {
 		SudokuBoard board = new SudokuBoard(SAMURAI_AREAS*BOX_SIZE, SAMURAI_AREAS*BOX_SIZE, DEFAULT_SIZE);
 		// Removed the empty areas where there are no tiles
 		Collection<Collection<SudokuTile>> queriesForBlocked = new ArrayList<Collection<SudokuTile>>();
 
-		queriesForBlocked.add(box(BOX_SIZE, BOX_SIZE*2).stream().map(pos -> board.Tile(pos.getX() + DEFAULT_SIZE, pos.getY()                            )).collect(Collectors.toList()));
-		queriesForBlocked.add(box(BOX_SIZE, BOX_SIZE*2).stream().map(pos -> board.Tile(pos.getX() + DEFAULT_SIZE, pos.getY() + DEFAULT_SIZE * 2 - BOX_SIZE)).collect(Collectors.toList()));
-		queriesForBlocked.add(box(BOX_SIZE*2, BOX_SIZE).stream().map(pos -> board.Tile(pos.getX()                            , pos.getY() + DEFAULT_SIZE)).collect(Collectors.toList()));
-		queriesForBlocked.add(box(BOX_SIZE*2, BOX_SIZE).stream().map(pos -> board.Tile(pos.getX() + DEFAULT_SIZE * 2 - BOX_SIZE, pos.getY() + DEFAULT_SIZE)).collect(Collectors.toList()));
+		queriesForBlocked.add(box(BOX_SIZE, BOX_SIZE*2).stream().map(pos -> board.tile(pos.getX() + DEFAULT_SIZE, pos.getY()                            )).collect(Collectors.toList()));
+		queriesForBlocked.add(box(BOX_SIZE, BOX_SIZE*2).stream().map(pos -> board.tile(pos.getX() + DEFAULT_SIZE, pos.getY() + DEFAULT_SIZE * 2 - BOX_SIZE)).collect(Collectors.toList()));
+		queriesForBlocked.add(box(BOX_SIZE*2, BOX_SIZE).stream().map(pos -> board.tile(pos.getX()                            , pos.getY() + DEFAULT_SIZE)).collect(Collectors.toList()));
+		queriesForBlocked.add(box(BOX_SIZE*2, BOX_SIZE).stream().map(pos -> board.tile(pos.getX() + DEFAULT_SIZE * 2 - BOX_SIZE, pos.getY() + DEFAULT_SIZE)).collect(Collectors.toList()));
 
 		queriesForBlocked.forEach(area -> area.forEach(tile -> tile.block()));
 
 		// Select the tiles in the 3 x 3 area (area.X, area.Y) and create rules for them
 		for (ImmutablePoint area : box(SAMURAI_AREAS, SAMURAI_AREAS)) {
-			List<SudokuTile> tilesInArea = box(BOX_SIZE, BOX_SIZE).stream().map(pos -> board.Tile(area.getX() * BOX_SIZE + pos.getX(), area.getY() * BOX_SIZE + pos.getY())).collect(Collectors.toList());
+			List<SudokuTile> tilesInArea = box(BOX_SIZE, BOX_SIZE).stream().map(pos -> board.tile(area.getX() * BOX_SIZE + pos.getX(), area.getY() * BOX_SIZE + pos.getY())).collect(Collectors.toList());
 
 			if (tilesInArea.iterator().next().IsBlocked())
 				continue;
@@ -47,16 +45,18 @@ public class SudokuFactory
 
 		for (int x = 0; x < board.getWidth(); x++) {
 			final int posSetI = x;
-			board.createRule("Column Upper " + x, box(1, DEFAULT_SIZE).stream().map(pos -> board.Tile(posSetI, pos.getY())));
-			board.createRule("Column Lower " + x, box(1, DEFAULT_SIZE).stream().map(pos -> board.Tile(posSetI, pos.getY() + DEFAULT_SIZE + BOX_SIZE)));
+			if (x < BOX_SIZE*3 || x >= BOX_SIZE * 4) {
+				board.createRule("Column Upper " + x, box(1, DEFAULT_SIZE).stream().map(pos -> board.tile(posSetI, pos.getY())));
+				board.createRule("Column Lower " + x, box(1, DEFAULT_SIZE).stream().map(pos -> board.tile(posSetI, pos.getY() + DEFAULT_SIZE + BOX_SIZE)));
 
-			board.createRule("Row Left "  + x, box(DEFAULT_SIZE, 1).stream().map(pos -> board.Tile(pos.getX(), posSetI)));
-			board.createRule("Row Right " + x, box(DEFAULT_SIZE, 1).stream().map(pos -> board.Tile(pos.getX() + DEFAULT_SIZE + BOX_SIZE, posSetI)));
+				board.createRule("Row Left "  + x, box(DEFAULT_SIZE, 1).stream().map(pos -> board.tile(pos.getX(), posSetI)));
+				board.createRule("Row Right " + x, box(DEFAULT_SIZE, 1).stream().map(pos -> board.tile(pos.getX() + DEFAULT_SIZE + BOX_SIZE, posSetI)));
+			}
 
 			if (x >= BOX_SIZE*2 && x < BOX_SIZE*2 + DEFAULT_SIZE) {
 				// Create rules for the middle sudoku
-				board.createRule("Column Middle " + x, box(1, 9).stream().map(pos -> board.Tile(posSetI, pos.getY() + BOX_SIZE*2)));
-				board.createRule("Row Middle "    + x, box(9, 1).stream().map(pos -> board.Tile(pos.getX() + BOX_SIZE*2, posSetI)));
+				board.createRule("Column Middle " + x, box(1, 9).stream().map(pos -> board.tile(posSetI, pos.getY() + BOX_SIZE*2)));
+				board.createRule("Row Middle "    + x, box(9, 1).stream().map(pos -> board.tile(pos.getX() + BOX_SIZE*2, posSetI)));
 			}
 		}
 		return board;
@@ -64,7 +64,7 @@ public class SudokuFactory
 
 	public static SudokuBoard sizeAndBoxes(int width, int height, int boxCountX, int boxCountY) {
 		SudokuBoard board = new SudokuBoard(width, height);
-		board.AddBoxesCount(boxCountX, boxCountY);
+		board.addBoxesCount(boxCountX, boxCountY);
 		return board;
 	}
 
@@ -72,16 +72,15 @@ public class SudokuFactory
 		return sizeAndBoxes(DEFAULT_SIZE, DEFAULT_SIZE, DEFAULT_SIZE / BOX_SIZE, DEFAULT_SIZE / BOX_SIZE);
 	}
 
-	public static SudokuBoard ClassicWith3x3BoxesAndHyperRegions()
-	{
+	public static SudokuBoard classicWith3x3BoxesAndHyperRegions() {
 		SudokuBoard board = classicWith3x3Boxes();
-		final int HyperSecond = HYPER_MARGIN + BOX_SIZE + HYPER_MARGIN;
+		final int hyperSecond = HYPER_MARGIN + BOX_SIZE + HYPER_MARGIN;
 		// Create the four extra hyper regions
 
-		board.createRule("HyperA", box(3, 3).stream().map(pos -> board.Tile(pos.getX() + HYPER_MARGIN, pos.getY() + HYPER_MARGIN)));
-		board.createRule("HyperB", box(3, 3).stream().map(pos -> board.Tile(pos.getX() + HyperSecond, pos.getY() + HYPER_MARGIN)));
-		board.createRule("HyperC", box(3, 3).stream().map(pos -> board.Tile(pos.getX() + HYPER_MARGIN, pos.getY() + HyperSecond)));
-		board.createRule("HyperD", box(3, 3).stream().map(pos -> board.Tile(pos.getX() + HyperSecond, pos.getY() + HyperSecond)));
+		board.createRule("Hyper Top-Left"    , box(3, 3).stream().map(pos -> board.tile(pos.getX() + HYPER_MARGIN, pos.getY() + HYPER_MARGIN)));
+		board.createRule("Hyper Top-Right"   , box(3, 3).stream().map(pos -> board.tile(pos.getX() + hyperSecond , pos.getY() + HYPER_MARGIN)));
+		board.createRule("Hyper Bottom-Left" , box(3, 3).stream().map(pos -> board.tile(pos.getX() + HYPER_MARGIN, pos.getY() + hyperSecond)));
+		board.createRule("Hyper Bottom-Right", box(3, 3).stream().map(pos -> board.tile(pos.getX() + hyperSecond , pos.getY() + hyperSecond)));
 		return board;
 	}
 
@@ -98,7 +97,7 @@ public class SudokuFactory
 		for (int ch : grouped.boxed().collect(Collectors.toList())) {
 			Stream<SudokuTile> ruleTiles = IntStream.range(0, joinedString.length())
 					.filter(i -> joinedString.charAt(i) == ch) // filter out any non-matching characters
-					.mapToObj(x -> board.Tile(x % sizeX, x / sizeY));
+					.mapToObj(x -> board.tile(x % sizeX, x / sizeY));
 			board.createRule("Area " + (char) ch, ruleTiles);
 		}
 

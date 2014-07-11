@@ -1,7 +1,7 @@
 ﻿package net.zomis.sudoku;
 import java.util.Collection;
 
-class Program {
+public class SudokuSolver {
 
 	public static void main(String[] args) {
 		solveFail();
@@ -11,6 +11,21 @@ class Program {
 		solveHyper();
 		solveSamurai();
 		solveIncompleteClassic();
+		solveHard();
+	}
+
+	private static void solveHard() {
+		SudokuBoard board = SudokuFactory.classicWith3x3Boxes();
+		board.addRow("8........");
+		board.addRow("..36.....");
+		board.addRow(".7..9.2..");
+		board.addRow(".5...7...");
+		board.addRow("....457..");
+		board.addRow("...1...3.");
+		board.addRow("..1....68");
+		board.addRow("..85...1.");
+		board.addRow(".9....4..");
+		completeSolve(board);
 	}
 
 	private static void solveFail() {
@@ -24,7 +39,7 @@ class Program {
 
 	private static void solveExtraZones() {
 		// http://en.wikipedia.org/wiki/File:Oceans_Hypersudoku18_Puzzle.svg
-		SudokuBoard board = SudokuFactory.ClassicWith3x3BoxesAndHyperRegions();
+		SudokuBoard board = SudokuFactory.classicWith3x3BoxesAndHyperRegions();
 		board.addRow(".......1.");
 		board.addRow("..2....34");
 		board.addRow("....51...");
@@ -110,33 +125,52 @@ class Program {
 		SudokuBoard board = SudokuFactory.classicWith3x3Boxes();
 		board.addRow("...84...9");
 		board.addRow("..1.....5");
-		board.addRow("8...2.46."); // Removed a "1" on this line
+		board.addRow("8...2.46."); // Was "8...2146."
 		board.addRow("7.8....9.");
 		board.addRow(".........");
 		board.addRow(".5....3.1");
-		board.addRow(".2491...7");
-		board.addRow("9.....5..");
+		board.addRow(".24.1...7"); // Was ".2491...7"
+		board.addRow("9........");
 		board.addRow("3...84...");
 		completeSolve(board);
 	}
 
 	private static void completeSolve(SudokuBoard board) {
-		System.out.println("Rules:");
-		board.outputRules();
-		System.out.println("Board:");
-		board.Output();
-		Collection<SudokuBoard> solutions = board.Solve();
-		System.out.println("Base Board Progress:");
-		board.Output();
-		System.out.println("--");
-		System.out.println("--");
-		System.out.println("All " + solutions.size() + " solutions:");
-		int i = 1;
-		for (SudokuBoard solution : solutions) {
-			System.out.println("----------------");
-			System.out.println("Solution " + i++ + " / " + solutions.size()
-					+ ":");
-			solution.Output();
+//		System.out.println("Rules:");
+//		board.outputRules();
+//		System.out.println("Board:");
+//		board.output();
+		if (!board.isRulesValid()) {
+			board.output();
+			throw new IllegalStateException("Board does not have all valid rules");
 		}
+		
+		long time = System.nanoTime();
+		Collection<SudokuBoard> solutions = board.solve();
+		time = System.nanoTime() - time;
+//		System.out.println("Base Board Progress:");
+		board.output();
+//		System.out.println("--");
+//		System.out.println("--");
+//		System.out.println("All " + solutions.size() + " solutions:");
+//		int i = 1;
+		for (SudokuBoard solution : solutions) {
+//			System.out.println("----------------");
+//			System.out.println("Solution " + i++ + " / " + solutions.size()	+ ":");
+			solution.output();
+			if (!solution.isComplete()) {
+				for (SudokuRule rule : solution.getRules()) {
+					if (!rule.checkComplete()) {
+						System.out.println("Rule is not complete: " + rule + " tiles " + rule.getTiles());
+						solution.highlightRule(rule);
+						System.out.println("------------------------------------");
+					}
+				}
+				
+				
+				throw new AssertionError();
+			}
+		}
+		System.out.println("Solutions found: " + solutions.size() + " in " + time / 1000000.0);
 	}
 }
