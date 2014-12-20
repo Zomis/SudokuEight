@@ -151,17 +151,20 @@ public class SudokuBoard {
 		if (!checkValid())
 			return SudokuProgress.FAILED;
 
-		for (SudokuRule rule : rules)
+		for (SudokuRule rule : rules) {
 			result = result.combineWith(rule.solve());
+		}
 
 		return result;
 	}
 
 	public Collection<SudokuBoard> solve() {
 		resetSolutions();
-		SudokuProgress simplify = SudokuProgress.PROGRESS;
-		while (simplify == SudokuProgress.PROGRESS)
+		SudokuProgress simplify;
+		do {
 			simplify = simplify();
+		}
+		while (simplify == SudokuProgress.PROGRESS);
 
 		if (simplify == SudokuProgress.FAILED)
 			return new ArrayList<>();
